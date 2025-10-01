@@ -1,0 +1,81 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Chat History 3D Graph</title>
+  <style> body,html { margin:0; padding:0; overflow:hidden; background:#0b0f12; } #graph { width:100vw; height:100vh; } .panel{position:fixed;top:10px;left:10px;background:#111a;color:#cfe; padding:10px;border-radius:8px;font-family:sans-serif} input,select{margin:4px 0} </style>
+</head>
+<body>
+<div class="panel">
+  <div><b>Search</b></div>
+  <input id="q" placeholder="label contains..." size="28"/>
+  <div><b>Type filter</b></div>
+  <select id="type"><option value="">All</option><option value="message">message</option></select>
+  <div><b>Timeline</b></div>
+  <input id="tmin" type="datetime-local"> to <input id="tmax" type="datetime-local">
+  <button id="apply">Apply</button>
+</div>
+<div id="graph"></div>
+
+<script src="https://unpkg.com/3d-force-graph"></script>
+<script src="https://unpkg.com/d3-dsv"></script>
+<script>
+const colorByType = (t)=>({message:'#61dafb'})[t] || '#9dfc8b';
+
+Promise.all([
+  fetch('nodes.csv').then(r=>r.text()).then(d=>d3.dsvFormat(',').parse(d)),
+  fetch('edges.csv').then(r=>r.text()).then(d=>d3.dsvFormat(',').parse(d))
+]).then(([nodes, edges]) => {
+  // Normalize
+  const types = new Set(nodes.map(n=>n.type).filter(Boolean));
+  const sel = document.getElementById('type');
+  [...types].filter(t=>t!=='message').forEach(t=>{
+    const o=document.createElement('option'); o.value=t; o.textContent=t; sel.appendChild(o);
+  });
+
+  const gData = {
+    nodes: nodes.map(n=>({
+      id: n.node_id, label: n.label, type: n.type, degree: +n.degree || 0.01,
+      ts: n.ts ? new Date(n.ts).getTime() : null
+    })),
+    links: edges.map(e=>({source: e.src, target: e.dst, rel: e.rel, weight: +e.weight || 1, ts: e.ts ? new Date(e.ts).getTime() : null}))
+  };
+
+  const elem = document.getElementById('graph');
+  const Graph = ForceGraph3D()(elem)
+    .graphData(gData)
+    .nodeLabel(n=>`${n.type}: ${n.label}`)
+    .nodeAutoColorBy('type')
+    .nodeVal(n=>Math.max(2, 20 * n.degree))
+    .linkOpacity(0.12)
+    .linkColor(()=> 'rgba(180,220,255,0.3)')
+    .backgroundColor('#0b0f12')
+    .onNodeClick(n=>Graph.cameraPosition(
+      { x: n.x * 1.8, y: n.y * 1.8, z: n.z * 1.8 }, n, 2000));
+
+  // Filtering
+  function applyFilters(){
+    const q = document.getElementById('q').value.toLowerCase();
+    const type = document.getElementById('type').value;
+    const tmin = document.getElementById('tmin').value ? new Date(document.getElementById('tmin').value).getTime() : -Infinity;
+    const tmax = document.getElementById('tmax').value ? new Date(document.getElementById('tmax').value).getTime() : Infinity;
+
+    const nodeKeep = new Set(gData.nodes.filter(n=>{
+      const okQ = !q || (n.label && n.label.toLowerCase().includes(q));
+      const okT = !type || n.type === type;
+      const okTime = n.ts==null || (n.ts>=tmin && n.ts<=tmax);
+      return okQ && okT && okTime;
+    }).map(n=>n.id));
+
+    const view = {
+      nodes: gData.nodes.filter(n=>nodeKeep.has(n.id)),
+      links: gData.links.filter(l=>nodeKeep.has(l.source.id||l.source) && nodeKeep.has(l.target.id||l.target))
+    };
+    Graph.graphData(view);
+  }
+  document.getElementById('apply').onclick = applyFilters;
+});
+</script>
+</body>
+</html>
