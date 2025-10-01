@@ -9,6 +9,10 @@ This project provides an end-to-end workflow for analyzing exported ChatGPT conv
 - Export node and edge lists (CSV) for graph-based visualizations.
 - Privacy-conscious: No sample data included; user uploads required for analysis.
 ## How to Use
+
+**Quick Launch in Colab:**
+[Open in Google Colab](https://colab.research.google.com/drive/19vSXVrKUP8HGLF9wgnrrndMoBYTCW_kB?usp=sharing)
+
 1. Export your ChatGPT conversation history from [chat.openai.com](https://chat.openai.com/).
 2. Download the conversations.json file provided by OpenAI.
 3. Open the notebook in Google Colab.
@@ -28,6 +32,9 @@ MIT License
 ## Author
 Eshan Sugeesh ([eshan.sugeesher.phy22@itbhu.ac.in](mailto:eshan.sugeesher.phy22@itbhu.ac.in))
 ## Tips
-- You can mention the exact Colab URL if you want quick notebook launch.
+
+**Quick Launch in Colab:**
+[Open in Google Colab](https://colab.research.google.com/drive/19vSXVrKUP8HGLF9wgnrrndMoBYTCW_kB?usp=sharing)
+
 - For extra professionalism, add badges (Colab, MIT License), usage screenshots, and optional advanced features section.
 - Include a disclaimer if your project is strictly for educational or personal usage.
